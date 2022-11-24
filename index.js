@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken")
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const { query } = require("express");
 require("dotenv").config();
@@ -20,13 +21,39 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const productsCollection = client.db("mobileBechi").collection("products");
+    const productsCollection = client.db("mobileBechi").collection("mobileProducts");
+    const productsCategorey = client.db("mobileBechi").collection("mobileCategorey");
+    const usersCollection = client.db("mobileBechi").collection("mobileBechiUsers");
 
-    app.get("/apple-products", async (req, res) => {
-      const query = {Categorey:"apple"};
+    app.get("/categorey", async (req, res) => {
+      const query = {};
+      const result = await productsCategorey.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/products", async(req, res)=>{
+      const query = {};
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     });
+
+    //save user data and generate jwt 
+    app.put("/users/:email", async(req, res)=>{
+      const email = req.params.email;
+      const user = req.body;
+      const filter = {email: email};
+      const options = {upsert: true};
+      const updatedoc ={
+        $set: user,
+      }
+      const result = await usersCollection.updateOne(filter, updatedoc, options);
+
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN,{
+        expiresIn:'1d',
+      })
+      res.send({result,token});
+    })
+
   } finally {
   }
 }
