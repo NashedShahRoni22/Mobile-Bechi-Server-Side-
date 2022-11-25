@@ -72,12 +72,18 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
-    //get all user
-    // app.get("/user", async(req, res)=>{
-    //   const query = {}
-    //   const result = await usersCollection.find(query).toArray();
-    //   res.send(result); 
-    // })
+    //get all buyers
+    app.get("/buyers", async(req, res)=>{
+      const query = {role:"Buyer"}
+      const result = await usersCollection.find(query).toArray();
+      res.send(result); 
+    })
+    //get all sellers
+    app.get("/sellers", async(req, res)=>{
+      const query = {role:"Seller"}
+      const result = await usersCollection.find(query).toArray();
+      res.send(result); 
+    })
     //save user bookings
     app.post('/bookings', async(req, res)=>{
       const bookings = req.body;
