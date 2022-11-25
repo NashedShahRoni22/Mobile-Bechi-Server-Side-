@@ -21,20 +21,23 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const productsCollection = client.db("mobileBechi").collection("mobileProducts");
     const productsCategorey = client.db("mobileBechi").collection("mobileCategorey");
+    const productsCollection = client.db("mobileBechi").collection("mobileProducts");
     const usersCollection = client.db("mobileBechi").collection("mobileBechiUsers");
+    const bookingCollection = client.db("mobileBechi").collection("bookings");
 
+    //get categorey
     app.get("/categorey", async (req, res) => {
       const query = {};
       const result = await productsCategorey.find(query).toArray();
       res.send(result);
     });
-
-    app.get("/products", async(req, res)=>{
-      const query = {};
-      const result = await productsCollection.find(query).toArray();
-      res.send(result);
+    //get products
+    app.get("/products/:id", async(req, res)=>{
+      const id = req.params.id;
+      const query = {categorey_id:id};
+      const products = await productsCollection.find(query).toArray();
+      res.send(products);
     });
 
     //save user data and generate jwt 
@@ -53,8 +56,15 @@ async function run() {
       })
       res.send({result,token});
     })
+    //save bookings
+    app.post('/bookings', async(req, res)=>{
+      const bookings = req.body;
+      const result = await bookingCollection.insertOne(bookings);
+      res.send(result);
+    })
 
-  } finally {
+  } 
+  finally {
   }
 }
 run().catch(console.dir);
