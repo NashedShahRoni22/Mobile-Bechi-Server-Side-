@@ -24,7 +24,7 @@ async function run() {
     const productsCategorey = client.db("mobileBechi").collection("mobileCategorey");
     const productsCollection = client.db("mobileBechi").collection("mobileProducts");
     const usersCollection = client.db("mobileBechi").collection("mobileBechiUsers");
-    const bookingCollection = client.db("mobileBechi").collection("bookings");
+    const bookingsCollection = client.db("mobileBechi").collection("bookings");
 
     //get categorey
     app.get("/categorey", async (req, res) => {
@@ -33,7 +33,7 @@ async function run() {
       res.send(result);
     });
     //get products
-    app.get("/products/:id", async(req, res)=>{
+    app.get("/categorey/:id", async(req, res)=>{
       const id = req.params.id;
       const query = {categorey_id:id};
       const products = await productsCollection.find(query).toArray();
@@ -59,8 +59,25 @@ async function run() {
     //save bookings
     app.post('/bookings', async(req, res)=>{
       const bookings = req.body;
-      const result = await bookingCollection.insertOne(bookings);
+      const query = {
+        userEmail: bookings.userEmail,
+        productId: bookings.productId,
+      }
+
+      const alreadyBooked = await bookingsCollection.find(query).toArray();
+      if(alreadyBooked.length){
+        const message = `You have already booked ${bookings.productName}`
+        return res.send({acknowledged: false, message});
+      }
+      const result = await bookingsCollection.insertOne(bookings);
       res.send(result);
+    })
+    //get bookings
+    app.get('/bookings', async(req, res)=>{
+      const email = req.query.email;
+      const query = {email: email};
+      const bookings = await bookingsCollection.find(query).toArray();
+      res.send(bookings); 
     })
 
   } 
