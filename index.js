@@ -12,6 +12,22 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const verifyJWT =(req, res, next)=>{
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send('unauthorized access');
+  }
+  const token = authHeader.split(' ')[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+    if(err){
+      return res.status(403).send({message: 'forbidden access'})
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.auieprw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -39,24 +55,30 @@ async function run() {
       const products = await productsCollection.find(query).toArray();
       res.send(products);
     });
-
-    //save user data and generate jwt 
-    app.put("/users/:email", async(req, res)=>{
-      const email = req.params.email;
-      const user = req.body;
-      const filter = {email: email};
-      const options = {upsert: true};
-      const updatedoc ={
-        $set: user,
+    //create jwt for user
+    app.get('/jwt', async(req, res)=>{
+      const email = req.query.email;
+      const query = {email : email};
+      const user = await usersCollection.findOne(query);
+      if(user){
+        const token = jwt.sign({email},process.env.ACCESS_TOKEN,{expiresIn:'1d'})
+        return res.send({accessToken: token});
       }
-      const result = await usersCollection.updateOne(filter, updatedoc, options);
-
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN,{
-        expiresIn:'1d',
-      })
-      res.send({result,token});
+      res.status(403).send({accessToken: ''})
     })
-    //save bookings
+    //save user info
+    app.post("/user", async(req, res)=>{
+      const user = req.body;
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
+    //get all user
+    // app.get("/user", async(req, res)=>{
+    //   const query = {}
+    //   const result = await usersCollection.find(query).toArray();
+    //   res.send(result); 
+    // })
+    //save user bookings
     app.post('/bookings', async(req, res)=>{
       const bookings = req.body;
       const query = {
@@ -72,9 +94,15 @@ async function run() {
       const result = await bookingsCollection.insertOne(bookings);
       res.send(result);
     })
-    //get bookings
-    app.get('/bookings', async(req, res)=>{
+    //get user bookings
+    app.get('/bookings', verifyJWT, async(req, res)=>{
       const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      
+      if(email !== decodedEmail){
+        return res.status(403).send({message: 'forbidden access'});
+      }
+
       const query = {email: email};
       const bookings = await bookingsCollection.find(query).toArray();
       res.send(bookings); 
