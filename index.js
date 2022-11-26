@@ -72,6 +72,13 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
+    //check admin
+    app.get("/user/admin/:email", async(req, res)=>{
+      const email = req.params.email;
+      const query = {email:email}
+      const user = await usersCollection.findOne(query);
+      res.send({isAdmin: user?.role === 'admin'})
+    })
     //get all buyers
     app.get("/buyers", async(req, res)=>{
       const query = {role:"Buyer"}
@@ -85,7 +92,13 @@ async function run() {
       res.send(result); 
     })
     //verify buyers
-    app.put("/sellers/verify/:id", async(req, res)=>{
+    app.put("/sellers/verify/:id",verifyJWT, async(req, res)=>{
+      const decodedEmail = req.decoded.email;
+      const query = {email: decodedEmail};
+      const user = await usersCollection.findOne(query);
+      if(user?.role !== 'admin'){
+        return res.status(403).send({message: 'forbidden access'})
+      }
       const id = req.params.id;
       const filter = {_id : ObjectId(id)};
       const option = {upsert: true};
