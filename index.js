@@ -72,6 +72,13 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
+    //delete one user
+    app.delete('/user/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id:ObjectId(id)};
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    })
     //check admin
     app.get("/user/admin/:email", async(req, res)=>{
       const email = req.params.email;
@@ -79,18 +86,18 @@ async function run() {
       const user = await usersCollection.findOne(query);
       res.send({isAdmin: user?.role === 'admin'})
     })
+    //check seller
+    app.get("/user/seller/:email", async(req, res)=>{
+      const email = req.params.email;
+      const query = {email:email}
+      const user = await usersCollection.findOne(query);
+      res.send({isSeller: user?.role === 'Seller'})
+    })
     //get all buyers
     app.get("/buyers", async(req, res)=>{
       const query = {role:"Buyer"}
       const result = await usersCollection.find(query).toArray();
       res.send(result); 
-    })
-    //delete one buyers
-    app.delete('/buyers/:id', async(req, res)=>{
-      const id = req.params.id;
-      const query = {_id:ObjectId(id)};
-      const result = await usersCollection.deleteOne(query);
-      res.send(result);
     })
     //get all sellers
     app.get("/sellers", async(req, res)=>{
