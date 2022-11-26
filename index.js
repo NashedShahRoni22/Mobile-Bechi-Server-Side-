@@ -55,6 +55,12 @@ async function run() {
       const products = await productsCollection.find(query).toArray();
       res.send(products);
     });
+    //post product
+    app.post("/products", async(req, res)=>{
+      const product = req.body;
+      const result = await productsCollection.insertOne(product);
+      res.send(result);
+    })
     //create jwt for user
     app.get('/jwt', async(req, res)=>{
       const email = req.query.email;
