@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken")
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { query } = require("express");
 require("dotenv").config();
 const port = process.env.PORT || 8000;
@@ -83,6 +83,19 @@ async function run() {
       const query = {role:"Seller"}
       const result = await usersCollection.find(query).toArray();
       res.send(result); 
+    })
+    //verify buyers
+    app.put("/sellers/verify/:id", async(req, res)=>{
+      const id = req.params.id;
+      const filter = {_id : ObjectId(id)};
+      const option = {upsert: true};
+      const updatedDoc = {
+        $set:{
+          isVerify : true
+        }
+      }
+      const result = await usersCollection.updateOne(filter, updatedDoc, option);
+      res.send(result);
     })
     //save user bookings
     app.post('/bookings', async(req, res)=>{
