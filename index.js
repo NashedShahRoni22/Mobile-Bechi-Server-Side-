@@ -154,6 +154,14 @@ async function run() {
       res.send(bookings); 
     })
 
+    //delete a bookings
+    app.delete('/bookings/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id:ObjectId(id)};
+      const result = await bookingsCollection.deleteOne(query);
+      res.send(result);
+    })
+
   } 
   finally {
   }
