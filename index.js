@@ -41,7 +41,6 @@ async function run() {
     const productsCollection = client.db("mobileBechi").collection("mobileProducts");
     const usersCollection = client.db("mobileBechi").collection("mobileBechiUsers");
     const bookingsCollection = client.db("mobileBechi").collection("bookings");
-    const advertiseCollection = client.db("mobileBechi").collection("advertiseProduct");
 
     //get categorey
     app.get("/categorey", async (req, res) => {
@@ -69,12 +68,26 @@ async function run() {
       const option = {upsert: true};
       const updatedDoc = {
         $set:{
-          isAdtertise: true
+          isAdvertise: true
         }
       }
       const result = await productsCollection.updateOne(filter, updatedDoc, option);
       res.send(result);
     })
+    //report product
+    app.put("/reportedProducts/:id", async(req, res)=>{
+      const id = req.params.id;
+      const filter ={_id: ObjectId(id)};
+      const option = {upsert: true};
+      const updatedDoc = {
+        $set:{
+          isReported: true
+        }
+      }
+      const result = await productsCollection.updateOne(filter, updatedDoc, option);
+      res.send(result);
+    })
+    
     //delete a product
     app.delete("/products/:id", async(req, res)=>{
       const id = req.params.id;
@@ -198,6 +211,12 @@ async function run() {
     //get product from advertise
     app.get("/products", async(req, res)=>{
       const query = {isAdtertise: true};
+      const result = await productsCollection.find(query).toArray();
+      res.send(result);
+    })
+    //get product from advertise
+    app.get("/reportedProducts", async(req, res)=>{
+      const query = {isReported: true};
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     })
