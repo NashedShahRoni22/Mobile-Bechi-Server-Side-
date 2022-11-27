@@ -5,12 +5,33 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const { query } = require("express");
 require("dotenv").config();
 const port = process.env.PORT || 8000;
+const stripe = require("stripe")(process.env.STRIPE_SECRET)
 
 const app = express();
 
 //middleware
 app.use(cors());
 app.use(express.json());
+
+//stripe payments
+app.post("/create-payment-intent", async (req, res) => {
+  const  booking = req.body;
+  const price = booking.price;
+  const amount = price * 100;
+
+  // Create a PaymentIntent with the order amount and currency
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    "payment_method_types": [
+      "card"
+    ],
+  });
+
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
 
 const verifyJWT =(req, res, next)=>{
   const authHeader = req.headers.authorization;
@@ -41,6 +62,7 @@ async function run() {
     const productsCollection = client.db("mobileBechi").collection("mobileProducts");
     const usersCollection = client.db("mobileBechi").collection("mobileBechiUsers");
     const bookingsCollection = client.db("mobileBechi").collection("bookings");
+    const paymentsCollection = client.db("mobileBechi").collection("payments");
 
     //get categorey
     app.get("/categorey", async (req, res) => {
@@ -201,6 +223,14 @@ async function run() {
       res.send(bookings); 
     })
 
+    //get specific booking details for payments
+    app.get('/bookings/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const booking = await bookingsCollection.findOne(query);
+      res.send(booking);
+    })
+
     //delete a bookings
     app.delete('/bookings/:id', async(req, res)=>{
       const id = req.params.id;
@@ -210,7 +240,7 @@ async function run() {
     })
     //get product from advertise
     app.get("/products", async(req, res)=>{
-      const query = {isAdtertise: true};
+      const query = {isAdvertise: true};
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     })
@@ -220,7 +250,21 @@ async function run() {
       const result = await productsCollection.find(query).toArray();
       res.send(result);
     })
-
+    //store payments
+    app.post("/payments", async(req, res)=>{
+      const payment = req.body;
+      const result = await paymentsCollection.insertOne(payment);
+      const id = payment.bookingId;
+      const filter = {_id: ObjectId(id)}
+      const updatedDoc = {
+        $set:{
+          paid: true,
+          transectionId: payment.transectionId
+        }
+      }
+      const updateResult = await bookingsCollection.updateOne(filter, updatedDoc)
+      res.send(result);
+    })
   } 
   finally {
   }
