@@ -62,12 +62,31 @@ async function run() {
       const result = await productsCollection.insertOne(product);
       res.send(result);
     })
+    //advertise product
+    app.put("/products/:id", async(req, res)=>{
+      const id = req.params.id;
+      const filter ={_id: ObjectId(id)};
+      const option = {upsert: true};
+      const updatedDoc = {
+        $set:{
+          isAdtertise: true
+        }
+      }
+      const result = await productsCollection.updateOne(filter, updatedDoc, option);
+      res.send(result);
+    })
+    //delete a product
+    app.delete("/products/:id", async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id:ObjectId(id)};
+      const result = productsCollection.deleteOne(query);
+      res.send(result);
+    })
     //get seller specific product
     app.get('/products/:email', async(req, res)=>{
       const email = req.params.email;
       const query = {sellerEmail:email};
       const products = await productsCollection.find(query).toArray();
-      console.log("Check",products);
       res.send(products); 
     })
     //create jwt for user
@@ -176,16 +195,10 @@ async function run() {
       const result = await bookingsCollection.deleteOne(query);
       res.send(result);
     })
-    // add product in advertise
-    app.post("/advertise", async(req, res)=>{
-      const advertiseProduct = req.body;
-      const result = await advertiseCollection.insertOne(advertiseProduct)
-      res.send(result);
-    })
     //get product from advertise
-    app.get("/advertise", async(req, res)=>{
-      const query = {};
-      const result = await advertiseCollection.find(query).toArray();
+    app.get("/products", async(req, res)=>{
+      const query = {isAdtertise: true};
+      const result = await productsCollection.find(query).toArray();
       res.send(result);
     })
 
