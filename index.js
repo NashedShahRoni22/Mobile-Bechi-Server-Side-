@@ -41,6 +41,7 @@ async function run() {
     const productsCollection = client.db("mobileBechi").collection("mobileProducts");
     const usersCollection = client.db("mobileBechi").collection("mobileBechiUsers");
     const bookingsCollection = client.db("mobileBechi").collection("bookings");
+    const advertiseCollection = client.db("mobileBechi").collection("advertiseProduct");
 
     //get categorey
     app.get("/categorey", async (req, res) => {
@@ -173,6 +174,12 @@ async function run() {
       const id = req.params.id;
       const query = {_id:ObjectId(id)};
       const result = await bookingsCollection.deleteOne(query);
+      res.send(result);
+    })
+    // add product in advertise
+    app.post("/advertise", async(req, res)=>{
+      const advertiseProduct = req.body;
+      const result = await advertiseCollection.insertOne(advertiseProduct)
       res.send(result);
     })
 
