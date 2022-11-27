@@ -182,6 +182,12 @@ async function run() {
       const result = await advertiseCollection.insertOne(advertiseProduct)
       res.send(result);
     })
+    //get product from advertise
+    app.get("/advertise", async(req, res)=>{
+      const query = {};
+      const result = await advertiseCollection.find(query).toArray();
+      res.send(result);
+    })
 
   } 
   finally {
