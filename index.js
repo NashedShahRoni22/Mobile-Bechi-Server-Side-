@@ -262,6 +262,9 @@ async function run() {
           transectionId: payment.transectionId
         }
       }
+      const pId = payment.productId;
+      const dQ = {_id: ObjectId(pId)};
+      const deleteResult = await productsCollection.deleteOne(dQ);
       const updateResult = await bookingsCollection.updateOne(filter, updatedDoc)
       res.send(result);
     })
